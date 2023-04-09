@@ -1,61 +1,63 @@
 #include <stdio.h>
-#include <stdlib.h>
-
 #define MAX_N 10
 
+int matrix[MAX_N][MAX_N];
+int visited[MAX_N][MAX_N];
+int cluster[MAX_N][MAX_N];
+int n;
+
+void createCluster(int row, int col, int clusterNo, int patokan, int toleransi) {
+    if(row < 0 || col < 0 || row >= n || col >= n) {
+        return;
+    }
+    if(visited[row][col] || matrix[row][col] < patokan-toleransi || matrix[row][col] > patokan+toleransi) {
+        return;
+    }
+    visited[row][col] = 1;
+    cluster[row][col] = clusterNo;
+    createCluster(row+1, col, clusterNo, patokan, toleransi);
+    createCluster(row-1, col, clusterNo, patokan, toleransi);
+    createCluster(row, col+1, clusterNo, patokan, toleransi);
+    createCluster(row, col-1, clusterNo, patokan, toleransi);
+}
+
 int main() {
-    int matrix[MAX_N][MAX_N];
-    int n, patokan, toleransi;
+    char fileName[50];
+    int patokan, toleransi, i, j, k, l, clusterCount = 0;
 
-    // Input nama file
-    char namafile[100];
     printf("Masukkan nama file: ");
-    scanf("%s", namafile);
+    scanf("%s", fileName);
 
-    // Baca matrix dari file
-    FILE *fp = fopen(namafile, "r");
-    if (fp == NULL) {
+    FILE *file = fopen(fileName, "r");
+    if(file == NULL) {
         printf("File tidak ditemukan.\n");
         return 0;
     }
 
-    fscanf(fp, "%d", &n);
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            fscanf(fp, "%d,", &matrix[i][j]);
+    fscanf(file, "%d", &n);
+    for(i=0; i<n; i++) {
+        for(j=0; j<n; j++) {
+            fscanf(file, "%d", &matrix[i][j]);
         }
     }
-    fclose(fp);
+    fclose(file);
 
-    // Input nilai patokan dan nilai toleransi
     printf("Masukkan nilai patokan: ");
     scanf("%d", &patokan);
+
     printf("Masukkan nilai toleransi: ");
     scanf("%d", &toleransi);
 
-    // Buat klaster dan hitung jumlah klaster
-    int klaster[MAX_N * MAX_N] = {0};
-    int num_klaster = 0;
-    for (int k = patokan - toleransi; k <= patokan + toleransi; k++) {
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                if (matrix[i][j] == k && klaster[i*n+j] == 0) {
-                    klaster[i*n+j] = num_klaster + 1;
-                    for (int di = -1; di <= 1; di++) {
-                        for (int dj = -1; dj <= 1; dj++) {
-                            if (i+di >= 0 && i+di < n && j+dj >= 0 && j+dj < n && matrix[i+di][j+dj] >= patokan-toleransi && matrix[i+di][j+dj] <= patokan+toleransi && klaster[(i+di)*n+(j+dj)] == 0) {
-                                klaster[(i+di)*n+(j+dj)] = num_klaster + 1;
-                            }
-                        }
-                    }
-                    num_klaster++;
-                }
+    for(i=0; i<n; i++) {
+        for(j=0; j<n; j++) {
+            if(!visited[i][j] && matrix[i][j] >= patokan-toleransi && matrix[i][j] <= patokan+toleransi) {
+                clusterCount++;
+                createCluster(i, j, clusterCount, patokan, toleransi);
             }
         }
     }
 
-    // Output jumlah klaster
-    printf("Jumlah klaster: %d\n", num_klaster);
+    printf("Jumlah klaster: %d\n", clusterCount);
 
     return 0;
 }
