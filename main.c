@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #define MAX_SIZE 10
 
 int visited[MAX_SIZE][MAX_SIZE] = {0};
