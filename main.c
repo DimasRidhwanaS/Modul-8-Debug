@@ -3,67 +3,86 @@
 
 #define MAX_N 10
 
-int visited[MAX_N][MAX_N] = {{0}};
-int matrix[MAX_N][MAX_N];
-int cluster_count = 0;
+int map[MAX_N][MAX_N];
+int visited[MAX_N][MAX_N];
 
-void DFS(int row, int col, int threshold_low, int threshold_high, int N) {
-    if (visited[row][col]) return;
-    visited[row][col] = 1;
+int n;
 
-    // Jika nilai di dalam cluster, maka DFS ke atas, bawah, kiri dan kanan
-    if (matrix[row][col] >= threshold_low && matrix[row][col] <= threshold_high) {
-        if (row > 0) DFS(row - 1, col, threshold_low, threshold_high, N);
-        if (row < N - 1) DFS(row + 1, col, threshold_low, threshold_high, N);
-        if (col > 0) DFS(row, col - 1, threshold_low, threshold_high, N);
-        if (col < N - 1) DFS(row, col + 1, threshold_low, threshold_high, N);
+int count_clusters(int x, int y, int lower_bound, int upper_bound) {
+    if (x < 0 || x >= n || y < 0 || y >= n) {
+        return 0;
     }
+
+    if (visited[x][y]) {
+        return 0;
+    }
+
+    if (map[x][y] < lower_bound || map[x][y] > upper_bound) {
+        return 0;
+    }
+
+    visited[x][y] = 1;
+
+    int count = 1;
+
+    count += count_clusters(x - 1, y, lower_bound, upper_bound);
+    count += count_clusters(x + 1, y, lower_bound, upper_bound);
+    count += count_clusters(x, y - 1, lower_bound, upper_bound);
+    count += count_clusters(x, y + 1, lower_bound, upper_bound);
+
+    return count;
 }
 
 int main() {
-    char filename[50];
-    int threshold_low, threshold_high, N;
+    char filename[100];
 
     printf("Masukkan nama file: ");
     scanf("%s", filename);
 
-    FILE* fp = fopen(filename, "r");
-
-    if (fp == NULL) {
-        printf("File tidak dapat dibuka atau tidak ada.\n");
-        exit(EXIT_FAILURE);
-    }
-
-    fscanf(fp, "%d", &N);
-
-    // Membaca matriks dari file
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-            fscanf(fp, "%d", &matrix[i][j]);
-        }
-    }
-
-    fclose(fp);
-
     printf("Masukkan nilai patokan: ");
-    scanf("%d", &threshold_low);
+    int patokan;
+    scanf("%d", &patokan);
 
     printf("Masukkan nilai toleransi: ");
-    scanf("%d", &threshold_high);
+    int toleransi;
+    scanf("%d", &toleransi);
 
-    threshold_high += threshold_low;
+    FILE *file = fopen(filename, "r");
+    if (file == NULL) {
+        printf("File tidak dapat dibuka.\n");
+        return 1;
+    }
 
-    // Menghitung jumlah cluster
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-            if (!visited[i][j] && matrix[i][j] >= threshold_low && matrix[i][j] <= threshold_high) {
-                DFS(i, j, threshold_low, threshold_high, N);
-                cluster_count++;
-            }
+    fscanf(file, "%d", &n);
+
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            fscanf(file, "%d", &map[i][j]);
         }
     }
 
-    printf("Jumlah klaster: %d\n", cluster_count);
+    fclose(file);
+
+    int lower_bound = patokan - toleransi;
+    int upper_bound = patokan + toleransi;
+
+    int num_clusters = 0;
+
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            if (visited[i][j]) {
+                continue;
+            }
+
+            if (map[i][j] < lower_bound || map[i][j] > upper_bound) {
+                continue;
+            }
+
+            num_clusters += (count_clusters(i, j, lower_bound, upper_bound) > 1);
+        }
+    }
+
+    printf("Jumlah klaster: %d\n", num_clusters);
 
     return 0;
 }
